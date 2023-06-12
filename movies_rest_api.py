@@ -4,16 +4,19 @@ import os.path
 
 app = Flask(__name__)
 
+
 def open_db_connection(db):
     """Connect to the given database and creates cursor on it."""
     global conn, cur
     conn = sqlite3.connect(db, check_same_thread=False)
     cur = conn.cursor()
 
+
 def close_db_connection():
     """Close connection to the database."""
     global conn
     conn.close()
+
 
 def create_table():
     """Creates table in sqlite which will carry movies data."""
@@ -28,6 +31,7 @@ def create_table():
     conn.commit()
     close_db_connection()
 
+
 def process_request_attributes():
     """Determines, if given recieved json has all valid atributes."""
     try:
@@ -41,13 +45,15 @@ def process_request_attributes():
         description = request.json['description']
     except KeyError:
         description = None
-    
+
     return status_code, (title, description, release_year)
+
 
 @app.route('/')
 def hello():
     """Print greetings."""
     return 'Hello World!'
+
 
 @app.route('/movies')
 def get_movies():
@@ -59,27 +65,31 @@ def get_movies():
 
     output = []
     for movie in movies:
-        data = {'id': movie[0], 'title': movie[1], 'description': movie[2], 'release_year': movie[3]}
+        data = {'id': movie[0], 'title': movie[1],
+                'description': movie[2], 'release_year': movie[3]}
         output.append(data)
 
     close_db_connection()
     return output
+
 
 @app.route('/movies/<int:id>')
 def get_movie(id):
     """Return movie of given id, if such exists."""
     global conn, cur
     open_db_connection('movies.db')
-    cur.execute("SELECT * FROM movies WHERE id=(?)",(id,))
+    cur.execute("SELECT * FROM movies WHERE id=(?)", (id,))
     movie = cur.fetchone()
     if (movie is None):
         resp = 'Record not found', 404
     else:
-        resp = {'id': movie[0], 'title': movie[1], 'description': movie[2], 'release_year': movie[3]}
+        resp = {'id': movie[0], 'title': movie[1],
+                'description': movie[2], 'release_year': movie[3]}
     close_db_connection()
     return resp
 
-@app.route('/movies',methods=['POST'])
+
+@app.route('/movies', methods=['POST'])
 def insert_movie():
     """Insert movie into database, if valid data given."""
     global conn, cur
@@ -89,14 +99,17 @@ def insert_movie():
         return data, status_code
 
     open_db_connection('movies.db')
-    cur.execute("""INSERT INTO movies (title, description, release_year) VALUES (?,?,?)""", (data[0], data[1], data[2]))
+    cur.execute("""INSERT INTO movies (title, description, release_year) VALUES (?,?,?)""",
+                (data[0], data[1], data[2]))
     conn.commit()
-    cur.execute("SELECT * FROM movies WHERE id=(?)",(cur.lastrowid,))
+    cur.execute("SELECT * FROM movies WHERE id=(?)", (cur.lastrowid,))
     movie = cur.fetchone()
-    resp = {'id': movie[0], 'title': movie[1], 'description': movie[2], 'release_year': movie[3]}
+    resp = {'id': movie[0], 'title': movie[1],
+            'description': movie[2], 'release_year': movie[3]}
     close_db_connection()
-    
+
     return resp
+
 
 @app.route('/movies/<int:id>', methods=['PUT'])
 def update_movie(id):
@@ -106,23 +119,25 @@ def update_movie(id):
 
     if status_code is 400:
         return data, status_code
-    
+
     open_db_connection('movies.db')
     if (data[1] is None):
-        cur.execute("UPDATE movies SET title = (?), release_year = (?) WHERE id = (?)", 
+        cur.execute("UPDATE movies SET title = (?), release_year = (?) WHERE id = (?)",
                     (data[0], data[2], id))
     else:
-        cur.execute("UPDATE movies SET title = (?), description = (?), release_year = (?) WHERE id = (?)", 
+        cur.execute("UPDATE movies SET title = (?), description = (?), release_year = (?) WHERE id = (?)",
                     (data[0], data[1], data[2], id))
     conn.commit()
     cur.execute("SELECT * FROM movies WHERE id=(?)", (id,))
     movie = cur.fetchone()
-    resp = {'id': movie[0], 'title': movie[1], 'description': movie[2], 'release_year': movie[3]}
+    resp = {'id': movie[0], 'title': movie[1],
+            'description': movie[2], 'release_year': movie[3]}
     close_db_connection()
     return resp
+
 
 if not os.path.isfile('movies.db'):
     create_table()
 
 if __name__ == '__main__':
-    app.run()
+    app.run(port=3000, host='0.0.0.0')
