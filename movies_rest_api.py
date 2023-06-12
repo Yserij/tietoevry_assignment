@@ -5,15 +5,18 @@ import os.path
 app = Flask(__name__)
 
 def open_db_connection(db):
+    """Connect to the given database and creates cursor on it."""
     global conn, cur
     conn = sqlite3.connect(db, check_same_thread=False)
     cur = conn.cursor()
 
 def close_db_connection():
+    """Close connection to the database."""
     global conn
     conn.close()
 
 def create_table():
+    """Creates table in sqlite which will carry movies data."""
     global conn, cur
     open_db_connection('movies.db')
     cur.execute("""CREATE TABLE movies (
@@ -25,16 +28,8 @@ def create_table():
     conn.commit()
     close_db_connection()
 
-def insert_testing_data():
-    global conn, cur
-    open_db_connection('movies.db')
-    cur.execute("INSERT INTO movies (title, description, release_year) VALUES (?,?,?)", ('The Matrix','The Matrix is computer-generated dream world ...',1999))
-    cur.execute("INSERT INTO movies (title, description, release_year) VALUES (?,?,?)", ('The Matrix Reloaded','Continuation of the cult clasic The Matrix ...',2003))
-    cur.execute("INSERT INTO movies (title, release_year) VALUES (?,?)", ('Ender\'s Game',2013))
-    conn.commit()
-    close_db_connection()
-
 def process_request_attributes():
+    """Determines, if given recieved json has all valid atributes."""
     try:
         title = request.json['title']
         release_year = request.json['release_year']
@@ -51,10 +46,12 @@ def process_request_attributes():
 
 @app.route('/')
 def hello():
+    """Print greetings."""
     return 'Hello World!'
 
 @app.route('/movies')
 def get_movies():
+    """Return all movies in the database."""
     global conn, cur
     open_db_connection('movies.db')
     cur.execute("SELECT * FROM movies")
@@ -70,6 +67,7 @@ def get_movies():
 
 @app.route('/movies/<int:id>')
 def get_movie(id):
+    """Return movie of given id, if such exists."""
     global conn, cur
     open_db_connection('movies.db')
     cur.execute("SELECT * FROM movies WHERE id=(?)",(id,))
@@ -83,6 +81,7 @@ def get_movie(id):
 
 @app.route('/movies',methods=['POST'])
 def insert_movie():
+    """Insert movie into database, if valid data given."""
     global conn, cur
     status_code, data = process_request_attributes()
 
@@ -92,7 +91,6 @@ def insert_movie():
     open_db_connection('movies.db')
     cur.execute("""INSERT INTO movies (title, description, release_year) VALUES (?,?,?)""", (data[0], data[1], data[2]))
     conn.commit()
-
     cur.execute("SELECT * FROM movies WHERE id=(?)",(cur.lastrowid,))
     movie = cur.fetchone()
     resp = {'id': movie[0], 'title': movie[1], 'description': movie[2], 'release_year': movie[3]}
@@ -102,6 +100,7 @@ def insert_movie():
 
 @app.route('/movies/<int:id>', methods=['PUT'])
 def update_movie(id):
+    """Updates movie of given id with given atributes. If description is not send, it doesn't change."""
     global conn, cur
     status_code, data = process_request_attributes()
 
@@ -110,13 +109,13 @@ def update_movie(id):
     
     open_db_connection('movies.db')
     if (data[1] is None):
-        cur.execute("UPDATE movies SET title = (?), release_year = (?) WHERE id = (?)", (data[0], data[2], id))
+        cur.execute("UPDATE movies SET title = (?), release_year = (?) WHERE id = (?)", 
+                    (data[0], data[2], id))
     else:
         cur.execute("UPDATE movies SET title = (?), description = (?), release_year = (?) WHERE id = (?)", 
                     (data[0], data[1], data[2], id))
     conn.commit()
-
-    cur.execute("SELECT * FROM movies WHERE id=(?)",(id,))
+    cur.execute("SELECT * FROM movies WHERE id=(?)", (id,))
     movie = cur.fetchone()
     resp = {'id': movie[0], 'title': movie[1], 'description': movie[2], 'release_year': movie[3]}
     close_db_connection()
@@ -124,8 +123,6 @@ def update_movie(id):
 
 if not os.path.isfile('movies.db'):
     create_table()
-    insert_testing_data()
-
 
 if __name__ == '__main__':
     app.run()
