@@ -1,0 +1,36 @@
+Readme for before-interview assignment for Tietoevry.
+Author: Samuel Kiszka
+
+General notes:
+##############
+My solution of the asignment uses sqlite3 as the way to store data.
+The file movies.db is generated first time the app is used and then it just connect to it every other time.
+But when the app is used as docer image, the database is created every time, due to the docker properties.
+
+To test the solution I used Postman to send requests.
+
+Run as is:
+##########
+To try the program without dockerization, simply run it as follows
+
+  python movies_rest_api.py
+
+where 'python' is pytohn interpreter of version at least 3.10 (as on this version it was implemented)
+While the program is prepared for docker use, it uses
+  app.run(port=3000, host='0.0.0.0')
+and so it runs on two addresses. Both works when the app is used this way.
+
+Run as docker image:
+####################
+To creaet docker image you can use following command in linux terminal.
+
+  docker build -t samuelkiszka/movies_rest_api:0.0.1.RELEASE .
+
+Docker image is created folowing the ruels from Dockerfile and can be run by
+
+  docker run -p 3000:3000 samuelkiszka/movies_rest_api:0.0.1.RELEASE
+
+Or you can download working image from dockerhub and run it same way
+
+  docker pull samuelkiszka/movies_rest_api:0.0.1.RELEASE
+
