@@ -95,7 +95,7 @@ def insert_movie():
     global conn, cur
     status_code, data = process_request_attributes()
 
-    if status_code is 400:
+    if status_code == 400:
         return data, status_code
 
     open_db_connection('movies.db')
@@ -117,7 +117,7 @@ def update_movie(id):
     global conn, cur
     status_code, data = process_request_attributes()
 
-    if status_code is 400:
+    if status_code == 400:
         return data, status_code
 
     open_db_connection('movies.db')
@@ -130,8 +130,11 @@ def update_movie(id):
     conn.commit()
     cur.execute("SELECT * FROM movies WHERE id=(?)", (id,))
     movie = cur.fetchone()
-    resp = {'id': movie[0], 'title': movie[1],
-            'description': movie[2], 'release_year': movie[3]}
+    if (movie is None):
+        resp = 'Record not found', 404
+    else:
+        resp = {'id': movie[0], 'title': movie[1],
+                'description': movie[2], 'release_year': movie[3]}
     close_db_connection()
     return resp
 
