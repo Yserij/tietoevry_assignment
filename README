@@ -33,3 +33,5 @@ Using the guidelines in the Dockerfile, a Docker image is produced and can be us
 Or you can download a working image from dockerhub and run it the same way
 
   docker pull samuelkiszka/movies_rest_api:0.0.1.RELEASE
+
+When using app this way, just the first addres works, as the other one is not connected to the outer machine from Docker.
